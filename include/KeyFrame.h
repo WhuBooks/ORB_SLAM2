@@ -35,203 +35,238 @@
 namespace ORB_SLAM2
 {
 
-class Map;
-class MapPoint;
-class Frame;
-class KeyFrameDatabase;
+    class Map;
 
-class KeyFrame
-{
-public:
-    KeyFrame(Frame &F, Map* pMap, KeyFrameDatabase* pKFDB);
+    class MapPoint;
 
-    // Pose functions
-    void SetPose(const cv::Mat &Tcw);
-    cv::Mat GetPose();
-    cv::Mat GetPoseInverse();
-    cv::Mat GetCameraCenter();
-    cv::Mat GetStereoCenter();
-    cv::Mat GetRotation();
-    cv::Mat GetTranslation();
+    class Frame;
 
-    // Bag of Words Representation
-    void ComputeBoW();
+    class KeyFrameDatabase;
 
-    // Covisibility graph functions
-    void AddConnection(KeyFrame* pKF, const int &weight);
-    void EraseConnection(KeyFrame* pKF);
-    void UpdateConnections();
-    void UpdateBestCovisibles();
-    std::set<KeyFrame *> GetConnectedKeyFrames();
-    std::vector<KeyFrame* > GetVectorCovisibleKeyFrames();
-    std::vector<KeyFrame*> GetBestCovisibilityKeyFrames(const int &N);
-    std::vector<KeyFrame*> GetCovisiblesByWeight(const int &w);
-    int GetWeight(KeyFrame* pKF);
+    class KeyFrame
+    {
+    public:
+        KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB);
 
-    // Spanning tree functions
-    void AddChild(KeyFrame* pKF);
-    void EraseChild(KeyFrame* pKF);
-    void ChangeParent(KeyFrame* pKF);
-    std::set<KeyFrame*> GetChilds();
-    KeyFrame* GetParent();
-    bool hasChild(KeyFrame* pKF);
+        // Pose functions
+        void SetPose(const cv::Mat &Tcw);
 
-    // Loop Edges
-    void AddLoopEdge(KeyFrame* pKF);
-    std::set<KeyFrame*> GetLoopEdges();
+        cv::Mat GetPose();
 
-    // MapPoint observation functions
-    void AddMapPoint(MapPoint* pMP, const size_t &idx);
-    void EraseMapPointMatch(const size_t &idx);
-    void EraseMapPointMatch(MapPoint* pMP);
-    void ReplaceMapPointMatch(const size_t &idx, MapPoint* pMP);
-    std::set<MapPoint*> GetMapPoints();
-    std::vector<MapPoint*> GetMapPointMatches();
-    int TrackedMapPoints(const int &minObs);
-    MapPoint* GetMapPoint(const size_t &idx);
+        cv::Mat GetPoseInverse();
 
-    // KeyPoint functions
-    std::vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r) const;
-    cv::Mat UnprojectStereo(int i);
+        cv::Mat GetCameraCenter();
 
-    // Image
-    bool IsInImage(const float &x, const float &y) const;
+        cv::Mat GetStereoCenter();
 
-    // Enable/Disable bad flag changes
-    void SetNotErase();
-    void SetErase();
+        cv::Mat GetRotation();
 
-    // Set/check bad flag
-    void SetBadFlag();
-    bool isBad();
+        cv::Mat GetTranslation();
 
-    // Compute Scene Depth (q=2 median). Used in monocular.
-    float ComputeSceneMedianDepth(const int q);
+        // Bag of Words Representation
+        void ComputeBoW();
 
-    static bool weightComp( int a, int b){
-        return a>b;
-    }
+        // Covisibility graph functions
+        void AddConnection(KeyFrame *pKF, const int &weight);
 
-    static bool lId(KeyFrame* pKF1, KeyFrame* pKF2){
-        return pKF1->mnId<pKF2->mnId;
-    }
+        void EraseConnection(KeyFrame *pKF);
 
+        void UpdateConnections();
 
-    // The following variables are accesed from only 1 thread or never change (no mutex needed).
-public:
+        void UpdateBestCovisibles();
 
-    static long unsigned int nNextId;
-    long unsigned int mnId;
-    const long unsigned int mnFrameId;
+        std::set<KeyFrame *> GetConnectedKeyFrames();
 
-    const double mTimeStamp;
+        std::vector<KeyFrame *> GetVectorCovisibleKeyFrames();
 
-    // Grid (to speed up feature matching)
-    const int mnGridCols;
-    const int mnGridRows;
-    const float mfGridElementWidthInv;
-    const float mfGridElementHeightInv;
+        std::vector<KeyFrame *> GetBestCovisibilityKeyFrames(const int &N);
 
-    // Variables used by the tracking
-    long unsigned int mnTrackReferenceForFrame;
-    long unsigned int mnFuseTargetForKF;
+        std::vector<KeyFrame *> GetCovisiblesByWeight(const int &w);
 
-    // Variables used by the local mapping
-    long unsigned int mnBALocalForKF;
-    long unsigned int mnBAFixedForKF;
+        int GetWeight(KeyFrame *pKF);
 
-    // Variables used by the keyframe database
-    long unsigned int mnLoopQuery;
-    int mnLoopWords;
-    float mLoopScore;
-    long unsigned int mnRelocQuery;
-    int mnRelocWords;
-    float mRelocScore;
+        // Spanning tree functions
+        void AddChild(KeyFrame *pKF);
 
-    // Variables used by loop closing
-    cv::Mat mTcwGBA;
-    cv::Mat mTcwBefGBA;
-    long unsigned int mnBAGlobalForKF;
+        void EraseChild(KeyFrame *pKF);
 
-    // Calibration parameters
-    const float fx, fy, cx, cy, invfx, invfy, mbf, mb, mThDepth;
+        void ChangeParent(KeyFrame *pKF);
 
-    // Number of KeyPoints
-    const int N;
+        std::set<KeyFrame *> GetChilds();
 
-    // KeyPoints, stereo coordinate and descriptors (all associated by an index)
-    const std::vector<cv::KeyPoint> mvKeys;
-    const std::vector<cv::KeyPoint> mvKeysUn;
-    const std::vector<float> mvuRight; // negative value for monocular points
-    const std::vector<float> mvDepth; // negative value for monocular points
-    const cv::Mat mDescriptors;
+        KeyFrame *GetParent();
 
-    //BoW
-    DBoW2::BowVector mBowVec;
-    DBoW2::FeatureVector mFeatVec;
+        bool hasChild(KeyFrame *pKF);
 
-    // Pose relative to parent (this is computed when bad flag is activated)
-    cv::Mat mTcp;
+        // Loop Edges
+        void AddLoopEdge(KeyFrame *pKF);
 
-    // Scale
-    const int mnScaleLevels;
-    const float mfScaleFactor;
-    const float mfLogScaleFactor;
-    const std::vector<float> mvScaleFactors;
-    const std::vector<float> mvLevelSigma2;
-    const std::vector<float> mvInvLevelSigma2;
+        std::set<KeyFrame *> GetLoopEdges();
 
-    // Image bounds and calibration
-    const int mnMinX;
-    const int mnMinY;
-    const int mnMaxX;
-    const int mnMaxY;
-    const cv::Mat mK;
+        // MapPoint observation functions
+        void AddMapPoint(MapPoint *pMP, const size_t &idx);
+
+        void EraseMapPointMatch(const size_t &idx);
+
+        void EraseMapPointMatch(MapPoint *pMP);
+
+        void ReplaceMapPointMatch(const size_t &idx, MapPoint *pMP);
+
+        std::set<MapPoint *> GetMapPoints();
+
+        std::vector<MapPoint *> GetMapPointMatches();
+
+        int TrackedMapPoints(const int &minObs);
+
+        MapPoint *GetMapPoint(const size_t &idx);
+
+        // KeyPoint functions
+        std::vector<size_t> GetFeaturesInArea(const float &x, const float &y, const float &r) const;
+
+        cv::Mat UnprojectStereo(int i);
+
+        // Image
+        bool IsInImage(const float &x, const float &y) const;
+
+        // Enable/Disable bad flag changes
+        void SetNotErase();
+
+        void SetErase();
+
+        // Set/check bad flag
+        void SetBadFlag();
+
+        bool isBad();
+
+        // Compute Scene Depth (q=2 median). Used in monocular.
+        float ComputeSceneMedianDepth(const int q);
+
+        static bool weightComp(int a, int b)
+        {
+            return a > b;
+        }
+
+        static bool lId(KeyFrame *pKF1, KeyFrame *pKF2)
+        {
+            return pKF1->mnId < pKF2->mnId;
+        }
 
 
-    // The following variables need to be accessed trough a mutex to be thread safe.
-protected:
+        // The following variables are accesed from only 1 thread or never change (no mutex needed).
+    public:
 
-    // SE3 Pose and camera center
-    cv::Mat Tcw;
-    cv::Mat Twc;
-    cv::Mat Ow;
+        static long unsigned int nNextId;
+        long unsigned int mnId;
+        const long unsigned int mnFrameId;
 
-    cv::Mat Cw; // Stereo middel point. Only for visualization
+        const double mTimeStamp;
 
-    // MapPoints associated to keypoints
-    std::vector<MapPoint*> mvpMapPoints;
+        // Grid (to speed up feature matching)
+        const int mnGridCols;
+        const int mnGridRows;
+        const float mfGridElementWidthInv;
+        const float mfGridElementHeightInv;
 
-    // BoW
-    KeyFrameDatabase* mpKeyFrameDB;
-    ORBVocabulary* mpORBvocabulary;
+        // Variables used by the tracking
+        long unsigned int mnTrackReferenceForFrame;
+        long unsigned int mnFuseTargetForKF;
 
-    // Grid over the image to speed up feature matching
-    std::vector< std::vector <std::vector<size_t> > > mGrid;
+        // Variables used by the local mapping
+        long unsigned int mnBALocalForKF;
+        long unsigned int mnBAFixedForKF;
 
-    std::map<KeyFrame*,int> mConnectedKeyFrameWeights;
-    std::vector<KeyFrame*> mvpOrderedConnectedKeyFrames;
-    std::vector<int> mvOrderedWeights;
+        // Variables used by the keyframe database
+        long unsigned int mnLoopQuery;
+        int mnLoopWords;
+        float mLoopScore;
+        long unsigned int mnRelocQuery;
+        int mnRelocWords;
+        float mRelocScore;
 
-    // Spanning Tree and Loop Edges
-    bool mbFirstConnection;
-    KeyFrame* mpParent;
-    std::set<KeyFrame*> mspChildrens;
-    std::set<KeyFrame*> mspLoopEdges;
+        // Variables used by loop closing
+        cv::Mat mTcwGBA;
+        cv::Mat mTcwBefGBA;
+        long unsigned int mnBAGlobalForKF;
 
-    // Bad flags
-    bool mbNotErase;
-    bool mbToBeErased;
-    bool mbBad;    
+        // Calibration parameters
+        const float fx, fy, cx, cy, invfx, invfy, mbf, mb, mThDepth;
 
-    float mHalfBaseline; // Only for visualization
+        // Number of KeyPoints
+        const int N;
 
-    Map* mpMap;
+        // KeyPoints, stereo coordinate and descriptors (all associated by an index)
+        const std::vector<cv::KeyPoint> mvKeys;
+        const std::vector<cv::KeyPoint> mvKeysUn;
+        const std::vector<float> mvuRight; // negative value for monocular points
+        const std::vector<float> mvDepth; // negative value for monocular points
+        const cv::Mat mDescriptors;
 
-    std::mutex mMutexPose;
-    std::mutex mMutexConnections;
-    std::mutex mMutexFeatures;
-};
+        //BoW
+        DBoW2::BowVector mBowVec;
+        DBoW2::FeatureVector mFeatVec;
+
+        // Pose relative to parent (this is computed when bad flag is activated)
+        cv::Mat mTcp;
+
+        // Scale
+        const int mnScaleLevels;
+        const float mfScaleFactor;
+        const float mfLogScaleFactor;
+        const std::vector<float> mvScaleFactors;
+        const std::vector<float> mvLevelSigma2;
+        const std::vector<float> mvInvLevelSigma2;
+
+        // Image bounds and calibration
+        const int mnMinX;
+        const int mnMinY;
+        const int mnMaxX;
+        const int mnMaxY;
+        const cv::Mat mK;
+
+
+        // The following variables need to be accessed trough a mutex to be thread safe.
+    protected:
+
+        // SE3 Pose and camera center
+        cv::Mat Tcw;
+        cv::Mat Twc;
+        cv::Mat Ow;
+
+        cv::Mat Cw; // Stereo middel point. Only for visualization
+
+        // MapPoints associated to keypoints
+        std::vector<MapPoint *> mvpMapPoints;
+
+        // BoW
+        KeyFrameDatabase *mpKeyFrameDB;
+        ORBVocabulary *mpORBvocabulary;
+
+        // Grid over the image to speed up feature matching
+        std::vector<std::vector<std::vector<size_t> > > mGrid;
+
+        std::map<KeyFrame *, int> mConnectedKeyFrameWeights;
+        std::vector<KeyFrame *> mvpOrderedConnectedKeyFrames;
+        std::vector<int> mvOrderedWeights;
+
+        // Spanning Tree and Loop Edges
+        bool mbFirstConnection;
+        KeyFrame *mpParent;
+        std::set<KeyFrame *> mspChildrens;
+        std::set<KeyFrame *> mspLoopEdges;
+
+        // Bad flags
+        bool mbNotErase;
+        bool mbToBeErased;
+        bool mbBad;
+
+        float mHalfBaseline; // Only for visualization
+
+        Map *mpMap;
+
+        std::mutex mMutexPose;
+        std::mutex mMutexConnections;
+        std::mutex mMutexFeatures;
+    };
 
 } //namespace ORB_SLAM
 

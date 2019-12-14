@@ -41,7 +41,9 @@ namespace ORB_SLAM2
     ORBmatcher::ORBmatcher(float nnratio, bool checkOri) : mfNNratio(nnratio), mbCheckOrientation(checkOri)
     {
     }
-
+	
+	/// 将地图点投影到当前帧中
+	/// 匹配当前地图点与当前帧的关键点,判断当前帧跟踪到了哪些点
     int ORBmatcher::SearchByProjection(Frame &F, const vector<MapPoint *> &vpMapPoints, const float th)
     {
         int nmatches = 0;
@@ -1330,7 +1332,9 @@ namespace ORB_SLAM2
 
         return nFound;
     }
-
+	
+	/// 将上一帧跟踪的地图点投影到当前帧中
+	/// 匹配当前帧与历史帧之间相似的关键点,更新当前帧的跟踪序列
     int ORBmatcher::SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono)
     {
         int nmatches = 0;
